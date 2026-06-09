@@ -1,0 +1,323 @@
+<template id="tpl-do-tracking">
+
+  <div class="container">
+
+    <!-- FORM DELIVERY ORDER -->
+
+    <div class="card">
+
+      <h2>
+        Tambah Delivery Order
+      </h2>
+
+      <div class="form-grid">
+
+        <input
+          type="text"
+          v-model="form.nomorDO"
+          readonly
+        >
+
+        <input
+          type="text"
+          placeholder="NIM"
+          v-model="form.nim"
+        >
+
+        <input
+          type="text"
+          placeholder="Nama Mahasiswa"
+          v-model="form.nama"
+        >
+
+        <select
+          v-model="form.ekspedisi"
+        >
+
+          <option value="">
+            Pilih Ekspedisi
+          </option>
+
+          <option
+            v-for="item in pengirimanlist"
+            :key="item.kode"
+            :value="item.nama"
+          >
+            {{ item.nama }}
+          </option>
+
+        </select>
+
+        <select
+          v-model="form.paket"
+        >
+
+          <option value="">
+            Pilih Paket
+          </option>
+
+          <option
+            v-for="item in paket"
+            :key="item.kode"
+            :value="item.kode"
+          >
+            {{ item.kode }} - {{ item.nama }}
+          </option>
+
+        </select>
+
+        <input
+          type="date"
+          v-model="form.tanggalKirim"
+        >
+
+      </div>
+
+      <!-- DETAIL PAKET -->
+
+      <div
+        v-if="selectedPaket"
+        class="paket-box"
+      >
+
+        <h3>
+          Detail Paket
+        </h3>
+
+        <p>
+
+          <strong>
+            Kode Paket:
+          </strong>
+
+          {{ selectedPaket.kode }}
+
+        </p>
+
+        <p>
+
+          <strong>
+            Nama Paket:
+          </strong>
+
+          {{ selectedPaket.nama }}
+
+        </p>
+
+        <p>
+
+          <strong>
+            Isi Paket:
+          </strong>
+
+        </p>
+
+        <ul>
+
+          <li
+            v-for="kode in selectedPaket.isi"
+            :key="kode"
+          >
+            {{ kode }}
+          </li>
+
+        </ul>
+
+        <p>
+
+          <strong>
+            Total Harga:
+          </strong>
+
+          {{ totalHarga | rupiah }}
+
+        </p>
+
+      </div>
+
+      <button
+        class="btn-primary"
+        @click="tambahTracking"
+      >
+        Simpan Delivery Order
+      </button>
+
+    </div>
+
+    <!-- SEARCH -->
+
+    <div class="card">
+
+      <h2>
+        Tracking Delivery Order
+      </h2>
+
+      <div class="search-box">
+
+        <input
+          type="text"
+          v-model="searchKeyword"
+          placeholder="Cari Nomor DO atau NIM"
+        >
+
+        <button
+          class="btn-secondary"
+          @click="resetSearch"
+        >
+          Reset
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- TAMBAH PROGRESS -->
+
+    <div class="card">
+
+      <h3>
+        Tambah Progress Pengiriman
+      </h3>
+
+      <div class="form-grid">
+
+        <select
+          v-model="progressDO"
+        >
+
+          <option value="">
+            Pilih Nomor DO
+          </option>
+
+          <option
+            v-for="(item,key) in tracking"
+            :key="key"
+            :value="key"
+          >
+            {{ key }}
+          </option>
+
+        </select>
+
+        <input
+          type="text"
+          placeholder="Keterangan Progress"
+          v-model="progressText"
+          @keyup.enter="tambahProgress"
+        >
+
+      </div>
+
+      <button
+        class="btn-primary"
+        @click="tambahProgress"
+      >
+        Tambah Progress
+      </button>
+
+    </div>
+
+    <!-- LIST TRACKING -->
+
+    <div class="card">
+
+      <div
+        class="tracking-card"
+        v-for="(item,key) in filteredTracking"
+        :key="key"
+      >
+
+        <div class="tracking-header">
+
+          <div>
+
+            <h3>
+              {{ key }}
+            </h3>
+
+            <p>
+              {{ item.nama }}
+            </p>
+
+          </div>
+
+          <span class="status-blue">
+            {{ item.status }}
+          </span>
+
+        </div>
+
+        <div class="tracking-detail">
+
+          <p>
+            <strong>NIM:</strong>
+            {{ item.nim }}
+          </p>
+
+          <p>
+            <strong>Ekspedisi:</strong>
+            {{ item.ekspedisi }}
+          </p>
+
+          <p>
+            <strong>Tanggal Kirim:</strong>
+            {{ item.tanggalKirim | tanggalIndonesia }}
+          </p>
+
+          <p>
+            <strong>Paket:</strong>
+            {{ item.paket }}
+          </p>
+
+          <p>
+            <strong>Total:</strong>
+            {{ item.total | rupiah }}
+          </p>
+
+        </div>
+
+        <!-- TIMELINE -->
+
+        <div
+          v-if="item.perjalanan.length"
+          class="timeline"
+        >
+
+          <div
+            class="timeline-item"
+            v-for="(p,index) in item.perjalanan"
+            :key="index"
+          >
+
+            <p>
+
+              <strong>
+                {{ p.waktu }}
+              </strong>
+
+            </p>
+
+            <p>
+              {{ p.keterangan }}
+            </p>
+
+          </div>
+
+        </div>
+
+        <div
+          v-else
+          class="empty"
+        >
+
+          Belum ada progress pengiriman
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</template>

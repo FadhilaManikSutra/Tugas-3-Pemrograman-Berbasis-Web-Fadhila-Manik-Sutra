@@ -1,0 +1,273 @@
+<template id="tpl-stock-table">
+
+  <div class="container">
+
+    <!-- FILTER -->
+
+    <div class="card">
+
+      <h2>
+        Data Stok Bahan Ajar
+      </h2>
+
+      <div class="filter-grid">
+
+        <select v-model="filterUpbjj">
+
+          <option value="">
+            Semua UT Daerah
+          </option>
+
+          <option
+            v-for="u in upbjjlist"
+            :key="u"
+          >
+            {{ u }}
+          </option>
+
+        </select>
+
+        <select
+          v-if="filterUpbjj"
+          v-model="filterKategori"
+        >
+
+          <option value="">
+            Semua Kategori
+          </option>
+
+          <option
+            v-for="k in kategoriFiltered"
+            :key="k"
+          >
+            {{ k }}
+          </option>
+
+        </select>
+
+        <select v-model="sortBy">
+
+          <option value="">
+            Urutkan
+          </option>
+
+          <option value="judul">
+            Judul
+          </option>
+
+          <option value="stok">
+            Stok
+          </option>
+
+          <option value="harga">
+            Harga
+          </option>
+
+        </select>
+
+        <label>
+
+          <input
+            type="checkbox"
+            v-model="filterWarning"
+          >
+
+          Reorder
+
+        </label>
+
+        <button
+          class="btn-secondary"
+          @click="resetFilter"
+        >
+          Reset
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- FORM -->
+
+    <div class="card">
+
+      <h2>
+
+        {{
+          editIndex !== null
+          ? 'Update Data'
+          : 'Tambah Data'
+        }}
+
+      </h2>
+
+      <div class="form-grid">
+
+        <input
+          v-model="form.kode"
+          placeholder="Kode MK"
+          @keyup.enter="simpanData"
+        >
+
+        <input
+          v-model="form.judul"
+          placeholder="Judul"
+          @keyup.enter="simpanData"
+        >
+
+        <input
+          v-model="form.kategori"
+          placeholder="Kategori"
+          @keyup.enter="simpanData"
+        >
+
+        <input
+          v-model="form.upbjj"
+          placeholder="UPBJJ"
+          @keyup.enter="simpanData"
+        >
+
+        <input
+          v-model="form.lokasiRak"
+          placeholder="Lokasi Rak"
+          @keyup.enter="simpanData"
+        >
+
+        <input
+          type="number"
+          v-model="form.harga"
+          placeholder="Harga"
+          @keyup.enter="simpanData"
+        >
+
+        <input
+          type="number"
+          v-model="form.qty"
+          placeholder="Qty"
+          @keyup.enter="simpanData"
+        >
+
+        <input
+          type="number"
+          v-model="form.safety"
+          placeholder="Safety Stock"
+          @keyup.enter="simpanData"
+        >
+
+      </div>
+
+      <textarea
+        v-model="form.catatanHTML"
+        placeholder="Catatan"
+      >
+      </textarea>
+
+      <br>
+      <br>
+
+      <button
+        class="btn-primary"
+        @click="simpanData"
+      >
+
+        {{
+          editIndex !== null
+          ? 'Update Data'
+          : 'Tambah Data'
+        }}
+
+      </button>
+
+    </div>
+
+    <!-- TABLE -->
+
+    <div class="card">
+
+      <h2>
+        Daftar Stok
+      </h2>
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            <th>Kode</th>
+            <th>Judul</th>
+            <th>Kategori</th>
+            <th>UPBJJ</th>
+            <th>Rak</th>
+            <th>Harga</th>
+            <th>Qty</th>
+            <th>Safety</th>
+            <th>Status</th>
+            <th>Aksi</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <tr
+            v-for="(item,index) in filteredData"
+            :key="item.kode"
+          >
+
+            <td>{{ item.kode }}</td>
+
+            <td>{{ item.judul }}</td>
+
+            <td>{{ item.kategori }}</td>
+
+            <td>{{ item.upbjj }}</td>
+
+            <td>{{ item.lokasiRak }}</td>
+
+            <td>{{ item.harga | rupiah }}</td>
+
+            <td>{{ item.qty | satuan }}</td>
+
+            <td>{{ item.safety | satuan }}</td>
+
+            <td>
+
+              <status-badge
+                :qty="item.qty"
+                :safety="item.safety"
+              >
+              </status-badge>
+
+            </td>
+
+            <td>
+
+              <button
+                class="btn-warning"
+                @click="editData(item)"
+              >
+                Edit
+              </button>
+
+              <button
+                class="btn-danger"
+                @click="hapusData(index)"
+              >
+                Hapus
+              </button>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</template>

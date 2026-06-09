@@ -1,0 +1,44 @@
+<template id="tpl-app-modal">
+
+  <div
+    v-if="show"
+    class="modal-overlay"
+  >
+
+    <div class="modal-box">
+
+      <h3>
+        {{ title }}
+      </h3>
+
+      <div class="modal-content">
+
+        <slot>
+          {{ message }}
+        </slot>
+
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          class="btn-secondary"
+          @click="closeModal"
+        >
+          Batal
+        </button>
+
+        <button
+          class="btn-danger"
+          @click="confirmDelete"
+        >
+          Hapus
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</template>
