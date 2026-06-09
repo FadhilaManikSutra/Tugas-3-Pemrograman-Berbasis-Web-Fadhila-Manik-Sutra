@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    SITTA UT - Vue Component
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="assets/css/style.css"
+  >
+
+</head>
+<body>
+
+<div id="app">
+
+  <!-- =========================
+       HOMEPAGE
+  ========================== -->
+
+  <section
+    v-if="page === 'home'"
+    class="landing"
+  >
+
+    <div class="landing-card">
+
+      <h1>
+        SITTA UT
+      </h1>
+
+      <p>
+        Sistem Informasi Tiras dan
+        Transaksi Bahan Ajar
+        Universitas Terbuka
+      </p>
+
+      <div class="menu-group">
+
+        <button
+          class="menu-btn"
+          @click="goStok"
+        >
+          Kelola Stok
+        </button>
+
+        <button
+          class="menu-btn secondary"
+          @click="openTracking"
+        >
+          Tracking DO
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- =========================
+       HEADER STOK
+  ========================== -->
+
+  <header
+    class="header"
+    v-if="page === 'stok'"
+  >
+
+    <div>
+
+      <h2>
+        SITTA Universitas Terbuka
+      </h2>
+
+      <p>
+        Sistem Informasi Tiras dan
+        Transaksi Bahan Ajar
+      </p>
+
+    </div>
+
+    <button
+      class="btn-home"
+      @click="goHome"
+    >
+      ← Beranda
+    </button>
+
+  </header>
+
+  <!-- =========================
+       HEADER TRACKING
+  ========================== -->
+
+  <header
+    class="header"
+    v-if="page === 'tracking'"
+  >
+
+    <div>
+
+      <h2>
+        Tracking Delivery Order
+      </h2>
+
+      <p>
+        Monitoring Pengiriman Bahan Ajar
+      </p>
+
+    </div>
+
+    <button
+      class="btn-home"
+      @click="goHome"
+    >
+      ← Beranda
+    </button>
+
+  </header>
+
+  <!-- =========================
+       HALAMAN STOK
+  ========================== -->
+
+  <section
+    v-if="page === 'stok'"
+  >
+
+    <stock-table
+
+      :stok="stok"
+
+      :upbjjlist="upbjjList"
+
+      :kategorilist="kategoriList"
+
+      @confirm-delete="openDeleteModal"
+
+    >
+    </stock-table>
+
+  </section>
+
+  <!-- =========================
+       HALAMAN TRACKING
+  ========================== -->
+
+  <section
+    v-if="page === 'tracking'"
+  >
+
+    <do-tracking
+
+      :tracking="tracking"
+
+      :paket="paket"
+
+      :pengirimanlist="pengirimanList"
+
+    >
+    </do-tracking>
+
+  </section>
+
+  <!-- =========================
+       MODAL HAPUS
+  ========================== -->
+
+  <app-modal
+
+    :show="modalShow"
+
+    title="Konfirmasi Hapus"
+
+    @close="closeModal"
+
+    @confirm="confirmDelete"
+
+  >
+
+    Apakah Anda yakin ingin
+    menghapus data bahan ajar ini?
+
+  </app-modal>
+
+</div>
+
+<!-- ========================================= -->
+<!-- TEMPLATE STATUS BADGE -->
+<!-- ========================================= -->
+
+<template id="tpl-status-badge">
+
+  <span
+    class="status-badge"
+    :class="badgeClass"
+  >
+
+    {{ icon }} {{ status }}
+
+  </span>
+
+</template>
+
+<!-- ========================================= -->
+<!-- TEMPLATE MODAL -->
+<!-- ========================================= -->
+
+<template id="tpl-app-modal">
+
+  <div
+    v-if="show"
+    class="modal-overlay"
+  >
+
+    <div class="modal-box">
+
+      <h3>
+        {{ title }}
+      </h3>
+
+      <div class="modal-content">
+
+        <slot></slot>
+
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          class="btn-secondary"
+          @click="closeModal"
+        >
+          Batal
+        </button>
+
+        <button
+          class="btn-danger"
+          @click="confirmDelete"
+        >
+          Hapus
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</template>
+
+<!-- ========================================= -->
+<!-- TEMPLATE STOCK TABLE -->
+<!-- ========================================= -->
+
+<template id="tpl-stock-table">
+
+  <div class="container">
+
+    <!-- STATS -->
+
+    <div class="stats-grid">
+
+      <div class="stats-card success">
+
+        <h3>
+          {{
+            stok.filter(
+              item => item.qty >= item.safety
+            ).length
+          }}
+        </h3>
+
+        <p>
+          Stok Aman
+        </p>
+
+      </div>
+
+      <div class="stats-card warning">
+
+        <h3>
+          {{
+            stok.filter(
+              item =>
+                item.qty > 0 &&
+                item.qty < item.safety
+            ).length
+          }}
+        </h3>
+
+        <p>
+          Stok Menipis
+        </p>
+
+      </div>
+
+      <div class="stats-card danger">
+
+        <h3>
+          {{
+            stok.filter(
+              item => item.qty === 0
+            ).length
+          }}
+        </h3>
+
+        <p>
+          Stok Kosong
+        </p>
+
+      </div>
+
+    </div>
+
+    <!-- FILTER -->
+
+    <div class="card">
+
+      <h3>
+        Filter Data Bahan Ajar
+      </h3>
+
+      <div class="filter-grid">
+
+        <div>
+
+          <label>
+            UT Daerah
+          </label>
+
+          <select
+            v-model="filterUpbjj"
+          >
+
+            <option value="">
+              Semua
+            </option>
+
+            <option
+              v-for="u in upbjjlist"
+              :key="u"
+            >
+              {{ u }}
+            </option>
+
+          </select>
+
+        </div>
+
+        <div
+          v-if="filterUpbjj"
+        >
+
+          <label>
+            Kategori
+          </label>
+
+          <select
+            v-model="filterKategori"
+          >
+
+            <option value="">
+              Semua
+            </option>
+
+            <option
+              v-for="k in kategoriFiltered"
+              :key="k"
+            >
+              {{ k }}
+            </option>
+
+          </select>
+
+        </div>
+
+        <div>
+
+          <label>
+            Urutkan
+          </label>
+
+          <select
+            v-model="sortBy"
+          >
+
+            <option value="">
+              Default
+            </option>
+
+            <option value="judul">
+              Judul
+            </option>
+
+            <option value="stok">
+              Stok
+            </option>
+
+            <option value="harga">
+              Harga
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+      <div
+        class="search-group"
+        style="margin-top:20px"
+      >
+
+        <label class="checkbox-label">
+
+          <input
+            type="checkbox"
+            v-model="filterWarning"
+          >
+
+          Tampilkan Reorder
+
+        </label>
+
+        <button
+          class="btn-secondary"
+          @click="resetFilter"
+        >
+          Reset Filter
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- FORM -->
+
+    <div class="card">
+
+      <h3>
+
+        {{
+          editIndex !== null
+          ? 'Update Bahan Ajar'
+          : 'Tambah Bahan Ajar'
+        }}
+
+      </h3>
+
+      <div class="form-grid">
+
+        <div>
+
+          <label>
+            Kode MK
+          </label>
+
+          <input
+            v-model="form.kode"
+            @keyup.enter="simpanData"
+          >
+
+        </div>
+
+        <div>
+
+          <label>
+            Judul
+          </label>
+
+          <input
+            v-model="form.judul"
+            @keyup.enter="simpanData"
+          >
+
+        </div>
+
+        <div>
+
+          <label>
+            Kategori
+          </label>
+
+          <input
+            v-model="form.kategori"
+            @keyup.enter="simpanData"
+          >
+
+        </div>
+
+        <div>
+
+          <label>
+            UPBJJ
+          </label>
+
+          <input
+            v-model="form.upbjj"
+            @keyup.enter="simpanData"
+          >
+
+        </div>
+
+        <div>
+
+          <label>
+            Lokasi Rak
+          </label>
+
+          <input
+            v-model="form.lokasiRak"
+            @keyup.enter="simpanData"
+          >
+
+        </div>
+
+        <div>
+
+          <label>
+            Harga
+          </label>
+
+          <input
+            type="number"
+            v-model="form.harga"
+            @keyup.enter="simpanData"
+          >
+
+        </div>
+
+        <div>
+
+          <label>
+            Qty
+          </label>
+
+          <input
+            type="number"
+            v-model="form.qty"
+            @keyup.enter="simpanData"
+          >
+
+        </div>
+
+        <div>
+
+          <label>
+            Safety Stock
+          </label>
+
+          <input
+            type="number"
+            v-model="form.safety"
+            @keyup.enter="simpanData"
+          >
+
+        </div>
+
+      </div>
+
+      <textarea
+        v-model="form.catatanHTML"
+        placeholder="Catatan"
+      >
+      </textarea>
+
+      <br>
+      <br>
+
+      <button
+        class="btn-primary"
+        @click="simpanData"
+      >
+
+        {{
+          editIndex !== null
+          ? 'Update Data'
+          : 'Tambah Data'
+        }}
+
+      </button>
+
+    </div>
+    
+    <!-- TABLE -->
+
+    <div class="card">
+
+      <h3>
+        Daftar Stok Bahan Ajar
+      </h3>
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>Kode</th>
+              <th>Judul</th>
+              <th>Kategori</th>
+              <th>UPBJJ</th>
+              <th>Rak</th>
+              <th>Harga</th>
+              <th>Qty</th>
+              <th>Safety</th>
+              <th>Status</th>
+              <th>Aksi</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            <tr
+              v-for="(item,index) in filteredData"
+              :key="item.kode"
+            >
+
+              <td>
+                {{ item.kode }}
+              </td>
+
+              <td>
+                {{ item.judul }}
+              </td>
+
+              <td>
+                {{ item.kategori }}
+              </td>
+
+              <td>
+                {{ item.upbjj }}
+              </td>
+
+              <td>
+                {{ item.lokasiRak }}
+              </td>
+
+              <td>
+                {{ item.harga | rupiah }}
+              </td>
+
+              <td>
+                {{ item.qty | satuan }}
+              </td>
+
+              <td>
+                {{ item.safety | satuan }}
+              </td>
+
+              <td>
+
+                <status-badge
+                  :qty="item.qty"
+                  :safety="item.safety"
+                >
+                </status-badge>
+
+              </td>
+
+              <td>
+
+                <button
+                  class="btn-warning"
+                  @click="editData(index)"
+                >
+                  Edit
+                </button>
+
+                <button
+                  class="btn-danger"
+                  @click="hapusData(index)"
+                >
+                  Hapus
+                </button>
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</template>
+
+<!-- ========================================= -->
+<!-- TEMPLATE TRACKING -->
+<!-- ========================================= -->
+
+<template id="tpl-do-tracking">
+
+  <div class="container">
+
+    <!-- FORM TRACKING -->
+
+    <div class="card">
+
+      <h2>
+        Tambah Delivery Order
+      </h2>
+
+      <div class="form-grid">
+
+        <input
+          type="text"
+          v-model="form.nomorDO"
+          readonly
+        >
+
+        <input
+          type="text"
+          placeholder="NIM"
+          v-model="form.nim"
+        >
+
+        <input
+          type="text"
+          placeholder="Nama"
+          v-model="form.nama"
+        >
+
+        <select
+          v-model="form.ekspedisi"
+        >
+
+          <option value="">
+            Pilih Ekspedisi
+          </option>
+
+          <option
+            v-for="item in pengirimanlist"
+            :key="item.kode"
+            :value="item.nama"
+          >
+            {{ item.nama }}
+          </option>
+
+        </select>
+
+        <select
+          v-model="form.paket"
+        >
+
+          <option value="">
+            Pilih Paket
+          </option>
+
+          <option
+            v-for="item in paket"
+            :key="item.kode"
+            :value="item.kode"
+          >
+            {{ item.kode }}
+            -
+            {{ item.nama }}
+          </option>
+
+        </select>
+
+        <input
+          type="date"
+          v-model="form.tanggalKirim"
+        >
+
+      </div>
+
+      <!-- DETAIL PAKET -->
+
+      <div
+        class="paket-box"
+        v-if="selectedPaket"
+      >
+
+        <h3>
+          Detail Paket
+        </h3>
+
+        <p>
+
+          <strong>
+            Kode Paket:
+          </strong>
+
+          {{ selectedPaket.kode }}
+
+        </p>
+
+        <p>
+
+          <strong>
+            Nama Paket:
+          </strong>
+
+          {{ selectedPaket.nama }}
+
+        </p>
+
+        <p>
+
+          <strong>
+            Isi Paket:
+          </strong>
+
+        </p>
+
+        <ul>
+
+          <li
+            v-for="kode in selectedPaket.isi"
+            :key="kode"
+          >
+            {{ kode }}
+          </li>
+
+        </ul>
+
+        <p>
+
+          <strong>
+            Total Harga:
+          </strong>
+
+          {{ totalHarga | rupiah }}
+
+        </p>
+
+      </div>
+
+      <button
+        class="btn-primary"
+        @click="tambahTracking"
+      >
+        Simpan Delivery Order
+      </button>
+
+    </div>
+
+    <!-- SEARCH -->
+
+    <div class="card">
+
+      <h2>
+        Tracking Delivery Order
+      </h2>
+
+      <div class="search-box">
+
+        <input
+
+          type="text"
+
+          v-model="searchKeyword"
+
+          placeholder="Cari Nomor DO atau NIM"
+
+          @keyup.enter="$forceUpdate()"
+
+          @keyup.esc="resetSearch"
+
+        >
+
+        <button
+          class="btn-secondary"
+          @click="resetSearch"
+        >
+          Reset
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- TAMBAH PROGRESS -->
+
+    <div class="card">
+
+      <h3>
+        Tambah Progress Pengiriman
+      </h3>
+
+      <div class="form-grid">
+
+        <select
+          v-model="progressDO"
+        >
+
+          <option value="">
+            Pilih Nomor DO
+          </option>
+
+          <option
+            v-for="(item,key) in tracking"
+            :key="key"
+            :value="key"
+          >
+            {{ key }}
+          </option>
+
+        </select>
+
+        <input
+
+          type="text"
+
+          placeholder="Keterangan Progress"
+
+          v-model="progressText"
+
+          @keyup.enter="tambahProgress"
+
+        >
+
+      </div>
+
+      <button
+        class="btn-primary"
+        @click="tambahProgress"
+      >
+        Tambah Progress
+      </button>
+
+    </div>
+    
+    <!-- LIST TRACKING -->
+
+    <div class="card">
+
+      <div
+
+        class="tracking-card"
+
+        v-for="(item,key) in filteredTracking"
+
+        :key="key"
+
+      >
+
+        <div class="tracking-header">
+
+          <div>
+
+            <h3>
+              {{ key }}
+            </h3>
+
+            <p>
+              {{ item.nama }}
+            </p>
+
+          </div>
+
+          <span
+            class="status-blue"
+          >
+            {{ item.status }}
+          </span>
+
+        </div>
+
+        <div class="tracking-detail">
+
+          <p>
+
+            <strong>
+              NIM:
+            </strong>
+
+            {{ item.nim }}
+
+          </p>
+
+          <p>
+
+            <strong>
+              Ekspedisi:
+            </strong>
+
+            {{ item.ekspedisi }}
+
+          </p>
+
+          <p>
+
+            <strong>
+              Tanggal Kirim:
+            </strong>
+
+            {{ item.tanggalKirim | tanggalIndonesia }}
+
+          </p>
+
+          <p>
+
+            <strong>
+              Paket:
+            </strong>
+
+            {{ item.paket }}
+
+          </p>
+
+          <p>
+
+            <strong>
+              Total:
+            </strong>
+
+            {{ item.total | rupiah }}
+
+          </p>
+
+        </div>
+
+        <!-- TIMELINE -->
+
+        <div
+          class="timeline"
+          v-if="item.perjalanan.length"
+        >
+
+          <div
+
+            class="timeline-item"
+
+            v-for="(p,index) in item.perjalanan"
+
+            :key="index"
+
+          >
+
+            <p>
+
+              <strong>
+                {{ p.waktu }}
+              </strong>
+
+            </p>
+
+            <p>
+              {{ p.keterangan }}
+            </p>
+
+          </div>
+
+        </div>
+
+        <div
+          v-else
+          class="empty"
+        >
+
+          Belum ada progress pengiriman
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</template>
+
+<!-- ========================================= -->
+<!-- VUE JS -->
+<!-- ========================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+
+<!-- ========================================= -->
+<!-- SERVICE -->
+<!-- ========================================= -->
+
+<script src="js/services/api.js"></script>
+
+<!-- ========================================= -->
+<!-- COMPONENT -->
+<!-- ========================================= -->
+
+<script src="js/components/status-badge.js"></script>
+<script src="js/components/app-modal.js"></script>
+<script src="js/components/stock-table.js"></script>
+<script src="js/components/do-tracking.js"></script>
+
+<!-- ========================================= -->
+<!-- ROOT APP -->
+<!-- ========================================= -->
+
+<script src="js/app.js"></script>
+
+</body>
+</html>    
